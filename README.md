@@ -1,11 +1,15 @@
-# WMZDailog - 功能最多样式最多的弹窗，支持普通/微信底部/提示/加载框/日期/地区/日历/选择/编辑/分享/菜单/自定义弹窗等,支持多种动画,链式编程调用，所有属性均可定制（pod 更新至 1.2.6）
+# WMZDailog - 功能最多样式最多的弹窗，支持普通/微信底部/提示/加载框/日期/地区/日历/选择/编辑/分享/菜单/吐司/自定义弹窗等,支持多种动画,链式编程调用，所有属性均可定制
 
+ [![Platform](https://img.shields.io/badge/platform-iOS-red.svg)](https://developer.apple.com/iphone/index.action) 
+ [![CocoaPods Compatible](https://img.shields.io/cocoapods/v/WMZDialog.svg)](https://img.shields.io/cocoapods/v/WMZDialog.svg)
+ [![License](https://img.shields.io/badge/license-MIT-blue.svg)](http://mit-license.org) 
+ 
 特性
 ==============
 - 链式语法 结构优雅
 - 支持任意位置视图的弹窗(包括滚动视图)
 - 支持单选/多选
-- 支持地区1/2/3级联动
+- 支持地区1/2/3级联动(自定义地区数据)
 - 支持无限级联动
 - 支持加载框
 - 支持提示框
@@ -20,6 +24,8 @@
 - 支持默认选中
 - 支持所有列表cell样式的自定义
 - 支持自定义弹窗
+- 支持多弹窗优先级
+- 支持自定义深色模式
 
 ## 调用枚举说明
 ```
@@ -44,6 +50,7 @@ typedef enum : NSUInteger{
     DialogTypeLoading,              //加载框
     DialogTypeCardPresent ,         //ios13 present效果
     DialogTypeCalander,             //日历弹窗
+    DialogTypeToast,                //吐司
     DialogTypeMyView,               //自定义弹窗
 }DialogType;
 ```
@@ -254,52 +261,70 @@ typedef enum : NSUInteger{
                 .wDataSet(@[@"游泳",@"打篮球",@"打羽毛球",@"爬山",@"踢足球",@"乒乓球"])
                 .wStart();
 
-### 自定义弹窗(优酷) 更多自定义弹窗看demo
-	
-     myAlert = Dialog()
-    .wTypeSet(DialogTypeMyView)
-    //关闭事件 此时要置为不然会内存泄漏
-    .wEventCloseSet(^(id anyID, id otherData) {
-        myAlert = nil;
-    })
-    .wShowAnimationSet(AninatonZoomIn)
-    .wHideAnimationSet(AninatonZoomOut)
-    .wMyDiaLogViewSet(^UIView *(UIView *mainView) {
-        UIImageView *image = [UIImageView new];
-        image.image = [UIImage imageNamed:@"healthy"];
-        image.frame = CGRectMake(0, 0, mainView.frame.size.width, 80);
-        [mainView addSubview:image];
+### 自定义弹窗(优酷) 更多自定义弹窗看demo  
+    	
+     Dialog()
+     .wTypeSet(DialogTypeMyView)
+     .wMyDiaLogViewSet(^UIView *(UIView *mainView) {
+         mainView.layer.masksToBounds = YES;
+         UIView *view = [[CustomView alloc] initWithFrame:CGRectMake(0, 0, 300, 250) superView:mainView];
+         mainView.layer.masksToBounds = YES;
+         mainView.layer.cornerRadius = 10;
+         return view;
+     })
+     .wStart();
+    
+### 自定义弹窗传入实现WMZCustomPrototol协议的UIView
         
-        UILabel *la = [UILabel new];
-        la.font = [UIFont systemFontOfSize:15.0f];
-        la.text = @"为呵护未成年人健康成长,优酷特别推出青少年模式,该模式下部分功能无法正常使用,请监护人主动选择，并设置监护密码";
-        la.numberOfLines = 0;
-        la.frame = CGRectMake(10, CGRectGetMaxY(image.frame), mainView.frame.size.width-20, 100);
-        [mainView addSubview:la];
-        
-        UIButton *enter = [UIButton buttonWithType:UIButtonTypeCustom];
-        [mainView addSubview:enter];
-        enter.titleLabel.font = [UIFont systemFontOfSize:14.0f];
-        enter.frame = CGRectMake(0, CGRectGetMaxY(la.frame), mainView.frame.size.width, 44);
-        [enter setTitle:@"进入青少年模式 >" forState:UIControlStateNormal];
-        [enter setTitleColor:DialogColor(0x108ee9) forState:UIControlStateNormal];
-        [enter addTarget:WEAK action:@selector(youkuAction:) forControlEvents:UIControlEventTouchUpInside];
-        
-        UIButton *know = [UIButton buttonWithType:UIButtonTypeCustom];
-        [mainView addSubview:know];
-        know.titleLabel.font = [UIFont systemFontOfSize:14.0f];
-        know.frame = CGRectMake(0, CGRectGetMaxY(enter.frame), mainView.frame.size.width, 44);
-        [know setTitle:@"我知道了" forState:UIControlStateNormal];
-        [know setTitleColor:DialogColor(0x3333333) forState:UIControlStateNormal];
-        [know addTarget:WEAK action:@selector(youkuAction:) forControlEvents:UIControlEventTouchUpInside];
-        
-        mainView.layer.masksToBounds = YES;
-        mainView.layer.cornerRadius = 10;
-        return know;
-    })
-    .wStart();
+     Dialog()
+     .wOpenKeyBoardSet(YES)
+     .wCustomView(DemoTwoView.new)
+     .wStart();
+    
+### 传入param
 
-### 其他模式看demo
+     WMZDialogParam *param = WMZDialogParam.new;
+     param.wType = DialogTypeShare;
+     param.wEventMenuClick = ^(id anyID, NSInteger section, NSInteger row) {
+                
+     };
+     param.wData = @[
+         @{@"name":@"微信",@"image":@"wallet"},
+         @{@"name":@"支付宝",@"image":@"aaa"},
+     ];
+     param.wRowCount = 1;
+     param.wColumnCount = 4;
+     Dialog().wStartParam(param);
+
+### 暗黑模式
+
+    Dialog()
+    .wTypeSet(DialogTypeSheet)
+    .wDataSet(@[@"男",@"女",@"保密"])
+    .wDarkMode(nil)
+    .wStartView(self.view);
+
+### 常见问题（开始收录）
+
+     1 如何改变位置？
+     (1) version < 1.4.2
+    .wCustomMainViewSet(^(UIView *mainView) {
+        CGRect rect = mainView.frame;
+        rect.origin.x = 30;
+        rect.origin.y = 100;
+        mainView.frame = rect;
+    })
+     (2) version > 1.4.2 (wPoint)
+    2 默认是开启横竖屏监听的如果有问题可以把wDeviceDidChange设为NO
+    3 多个弹窗优先级可以设置wLevel(同个父级有效)
+    4 默认弹窗wStart是在window层 如果要设置不同层可以用wStartView(传入父view)
+    
+     (3)///设置全局默认配置 主题色字体等 
+     [WMZDialogManage settingGlobalConfig:^(WMZDialogParam * _Nullable param) {
+         param.wOKColor = UIColor.redColor;
+     }];
+
+
 
 ### 依赖
 无任何依赖 
@@ -309,13 +334,10 @@ typedef enum : NSUInteger{
 
 ### CocoaPods  
 1. 将 cocoapods 更新至最新版本.
-2. 在 Podfile 中添加 `pod 'WMZDialog',inhibit_warnings: true`(可消除警告)。或    pod 'WMZDialog' , '~>1.2.6'
+2. 在 Podfile 中添加    pod 'WMZDialog'
 3. 执行 `pod install` 或 `pod update`。
 4. 导入 #import "WMZDialog.h"。
 
-### 注:要消除链式编程的警告 
-要在Buildding Settings 把CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF 设为NO
-Podfile里加inhibit_warnings: true 也可消除警告
 
 ### 手动安装
 
@@ -328,12 +350,6 @@ Podfile里加inhibit_warnings: true 也可消除警告
 该库最低支持 `iOS 9.0` 和 `Xcode 9.0`。
 
 
-
-许可证
-==============
-WMZDialog 使用 MIT 许可证，详情见 [LICENSE](LICENSE) 文件。
-
-
 个人主页
 ==============
 使用过程中如果有什么bug欢迎给我提issue 我看到就会解决
@@ -341,31 +357,42 @@ WMZDialog 使用 MIT 许可证，详情见 [LICENSE](LICENSE) 文件。
 
 更新日记
 ==============
-- 20191005 优化代码修复地区弹窗bug
-- 20191105 修改自动消失的样式 可支持图文
-- 20191107 新增日历弹窗
-- 20191108 新增ios13 present弹窗
-- 20191109 cocopod 更新至 1.0.1
-- 20191112 新增wDefaultDate属性  表示默认选中时间 default 当前时间
-- 20191113 cocopod 更新至 1.0.2 修复pod指定ios版本的问题
-- 20191124 cocopod 更新至 1.0.3 修复pod 版本过低导致出现weak的问题
-- 20191214 cocopod 更新至 1.0.4 修复ios9.0某个type闪退问题和增加normalType确定或取消文字过多自动换行
-- 20191216 cocopod 更新至 1.0.5 修复ios10崩溃问题
+- 20220929 v1.4.12 新增富文本支持 
+- 20220926 v1.4.11 修复日历bug
+- 20220925 v1.4.8 fix #68 #66 #60 #58 新增全局配置使用 新增多个属性
+- 20211229 v1.4.6 修复崩溃 删除1.4.5 1.4.3有问题版本
+- 20211018 v1.4.2 新增wPoint自定义位置
+- 20210929 v1.4.0 新增暗黑模式 适配ios15 底层修改 
+- 20210514 v1.3.2 修改wDidChange和wLevel默认值
+- 20210513 v1.3.1 
+(1)新增通用wAutoClose属性 响应库内的自动关闭 default YES 如果设为NO则需要自己调用手动关闭的类方法 closeWithshowView 
+(2) writeType新增 wRegular属性  正则校验规则 default nil  例如 可传入 @{@"reguler":@"^1+[3578]+\\d{9}",@"reguletTip":@"请输入正确的手机号"}
+- 20210501 v1.3.0 新增DialogTypeToast类型 修复若干问题（消除警告 建议更新至此）
+- 20210412 v1.2.6 新增wLevel属性可管理多个弹窗的层级, 加入WMZDialogManage管理类
+- 20210202 v1.2.5 优化LoadingType 
+- 20210113 v1.2.4 优化静态库xib问题 LoadingType优化 可作为项目的loading框使用
+- 20210107 v1.2.3 优化选择弹窗 解决pod里没有xib文件导致报错的问题
+- 20210105 v1.2.1 日历弹窗新增多个连续区域 支持横开启屏监听wDeviceDidChange 优化列表选项
+- 20201221 v1.2.0 日历弹窗新增连续区域 pop弹窗修复bug+新增自定义三角形size
+- 20201218 v1.1.10 修复ios14无法弹出的问题
+- 20201118 v1.1.9 新增阴影点击回调 新增自定义地区数据
+- 20201009 v1.1.8 修复bug
+- 20200929 v1.1.7 支持地区/拾取器/多级菜单 除了关于时间的默认选中用wDefaultDate,其他使用wListDefaultValue
+- 20200920 v1.1.6 适配ios14 
+- 20200828 v1.1.5 新增列表默认选中的属性
+- 20200606 v1.1.3 新增wTag可防止重复点击 新增自定义frame的方法
+- 20200519 v1.1.2 优化一些地方
+- 20200117 v1.1.0 更新一波bug
+- 20200107 v1.0.7 修复bug
+- 20191225 v1.0.6 优化日期选择弹窗类型 
 - 20191223 优化pop弹窗类型 支持圆角的定制 支持tableview等滚动视图的弹出
-- 20191225 优化日期选择弹窗类型   1 新增最大和最小时间支持超出隐藏         2 新增日期选择格式化输出           3 修复弹窗嵌套的bug          4 cocopod更新至1.0.6(建议更新)
-- 20200107 cocopod 更新至 1.0.7 修复日期选择的bug  修复pop弹窗的bug   修复presentCard弹窗的bug
-- 20200117 cocopod 更新至 1.1.0 过年更新一波bug
-- 20200519 cocopod 更新至 1.1.2 优化一些地方
-- 20200606 cocopod 更新至 1.1.3 新增wTag可防止重复点击 新增自定义frame的方法
-- 20200828 cocopod 更新至 1.1.5 新增列表默认选中的属性
-- 20200920 cocopod 更新至 1.1.6 适配ios14 
-- 20200929 cocopod 更新至 1.1.7 时间好快又国庆了,国庆放假前更新一波 支持地区/拾取器/多级菜单 除了关于时间的默认选中用wDefaultDate,其他使用wListDefaultValue
-- 20201009 cocopod 更新至 1.1.8 修复bug
-- 20201118 cocopod 更新至 1.1.9 新增阴影点击回调 新增自定义地区数据
-- 20201218 cocopod 更新至 1.1.10 修复ios14无法弹出的问题
-- 20201221 cocopod 更新至 1.2.0 日历弹窗新增连续区域 pop弹窗修复bug+新增自定义三角形size
-- 20210105 cocopod 更新至 1.2.1 日历弹窗新增多个连续区域 支持横开启屏监听wDeviceDidChange 优化列表选项
-- 20210107 cocopod 更新至 1.2.3 优化选择弹窗 解决pod里没有xib文件导致报错的问题
-- 20210113 cocopod 更新至 1.2.4 优化静态库xib问题 LoadingType优化 可作为项目的loading框使用
-- 20210202 cocopod 更新至 1.2.5 优化LoadingType 又是一年过年了 真快
-- 20210412 cocopod 更新至 1.2.6 新增wLevel属性可管理多个弹窗的层级, 加入WMZDialogManage管理类
+- 20191216 v1.0.5 修复ios10崩溃问题
+- 20191214 v1.0.4 修复ios9.0某个type闪退问题和增加normalType确定或取消文字过多自动换行
+- 20191124 v1.0.3 修复pod 版本过低导致出现weak的问题
+- 20191113 v1.0.2 修复pod指定ios版本的问题
+- 20191109 v1.0.1
+- 20191112 新增wDefaultDate属性  表示默认选中时间 default 当前时间
+- 20191108 新增ios13 present弹窗
+- 20191107 新增日历弹窗
+- 20191105 修改自动消失的样式 可支持图文
+- 20191005 优化代码修复地区弹窗bug

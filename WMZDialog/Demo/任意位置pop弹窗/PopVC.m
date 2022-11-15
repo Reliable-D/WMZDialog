@@ -28,13 +28,21 @@
     self.navigationItem.rightBarButtonItem = barItem;
     
 
-    self.dataArr = @[@"上",@"左",@"下",@"tableview",@"右",@"collectionView",@"scrollView",@"嵌套视图"];
+    self.dataArr = @[@"上",@"左",@"下",@"tableview",@"右",@"collectionView",@"scrollView",@"嵌套视图",@"行列内容",@"自定义内容"];
 }
 
 - (void)action:(UIButton*)sender{
+    if(sender.tag == 8){
+        [self rowView:sender];
+        return;
+    }
     
+    if(sender.tag == 9){
+        [self customView:sender];
+        return;
+    }
     
-    if (sender.tag == 3) {
+    else if (sender.tag == 3) {
         [self.navigationController pushViewController:[NSClassFromString(@"TableViewPopDemo") new] animated:YES];
         return;
     }else if(sender.tag == 5){
@@ -66,10 +74,27 @@
 //    })
     //弹出位置的距离 default 0
 //    .wMainOffsetYSet(10)
-    //弹出三角形的size default  CGSizeMake(Dialog_GetWNum(30), Dialog_GetWNum(20)
+    //弹出三角形的size default  CGSizeMake(DialogRealW(30), DialogRealW(20)
 //    .wAngleSizeSet(CGSizeMake(20, 15))
     //可以设置三角形的颜色
 //    .wMainBackColorSet([UIColor orangeColor])
+    
+     ///如果需要背景为图片的时候
+//    .wCustomMainViewSet(^(UIView *mainView) {
+//        mainView.layer.contents = (id)[UIImage imageNamed:@"healthy"].CGImage;
+//        for (WMZDialogTableView *view in [mainView subviews]) {
+//            if ([view isKindOfClass:WMZDialogTableView.class]) {
+//                view.backgroundColor = UIColor.clearColor;
+//                [view layoutIfNeeded];
+//                for (UITableViewCell *cell in view.visibleCells) {
+//                    cell.contentView.backgroundColor = UIColor.clearColor;
+//                    cell.backgroundColor = UIColor.clearColor;
+//                }
+//                break;;
+//            }
+//        }
+//    })
+    
     //下划线显示
     .wSeparatorStyleSet(UITableViewCellSeparatorStyleSingleLine)
     //弹出动画
@@ -85,13 +110,62 @@
                 @{@"name":@"微信",@"image":@"wallet"},
                 @{@"name":@"支付宝",@"image":@"aaa"},
                 @{@"name":@"米聊",@"image":@"bbb"},
-                @{@"name":@"微信1",@"image":@"wallet"},                
+                @{@"name":@"微信1",@"image":@"wallet"},
                 ])
     //弹出视图
     .wTapViewSet(sender)
     .wStart();
 }
 
+///行列视图
+- (void)rowView:(UIButton*)sender{
+    Dialog()
+    ///自定义修改默认内容
+    .wCustomShareViewSet(^(UIScrollView * _Nullable shareView) {
+        NSLog(@"%@",shareView.subviews);
+    })
+    .wTypeSet(DialogTypePop)
+    ///分享类型内容
+    .wPopStyleTypeSet(DialogPopTypeShare)
+    ///多少列 此处必须设置正确
+    .wColumnCountSet(3)
+    ///多少行  此处必须设置正确
+    .wRowCountSet(2)
+    ///item高度宽度
+    .wCellHeightSet(60)
+    .wTapViewSet(sender)
+    .wEventFinishSet(^(id anyID, NSIndexPath *path, DialogType type) {
+        NSLog(@"%@ %@",anyID,path);
+    })
+    .wDirectionSet(0)
+//    .wDataSet(@[@"微信",@"支付宝",@"米聊",@"微信1",@"微信2"])
+    .wDataSet(@[
+        @{@"name":@"微信",@"image":@"wallet"},
+        @{@"name":@"支付宝",@"image":@"aaa"},
+        @{@"name":@"米聊",@"image":@"bbb"},
+        @{@"name":@"微信1",@"image":@"wallet"},
+        @{@"name":@"微信1",@"image":@"wallet"},
+        ])
+    .wStart();
+}
+
+///自定义视图
+- (void)customView:(UIButton*)sender{
+    Dialog()
+    .wTypeSet(DialogTypePop)
+    ///自定义类型内容
+    .wPopStyleTypeSet(DialogPopTypeCustom)
+    ///自定义内容
+    .wPopCustomViewSet(^UIView *{
+        UIView *mainView = UIView.new;
+        mainView.frame = CGRectMake(0, 0, 100, 100);
+        mainView.backgroundColor = UIColor.redColor;
+        return mainView;
+    })
+    .wTapViewSet(sender)
+    .wDirectionSet(0)
+    .wStart();
+}
 
 //自定义微信例子
 - (void)customWX:(UIButton*)sender{
@@ -116,7 +190,7 @@
     //自定义cell高度
     .wCellHeightSet(44)
     //自定义cell(如有需要)
-    .wMyCellSet(^UITableViewCell *(NSIndexPath *indexPath, UITableView *tableView, id model) {
+    .wCustomCellSet(^UITableViewCell *(NSIndexPath *indexPath, UITableView *tableView, id model, BOOL isSelected){
         WXCell *cell = [tableView dequeueReusableCellWithIdentifier:@"WXCell"];
         if (!cell) {
             cell = [[WXCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:@"WXCell"];
